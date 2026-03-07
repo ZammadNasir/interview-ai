@@ -1,11 +1,17 @@
-import dotenv from "dotenv";
+import "dotenv/config";
+
 import app from "./src/app.js";
 import connectDB from "./src/config/database.js";
+import {
+  resume,
+  selfDescription,
+  jobDescription,
+} from "./src/services/temp.js";
+import { generateInterviewReport } from "./src/services/ai.service.js";
 
+connectDB();
 
-dotenv.config();
-connectDB()
-
+// generateInterviewReport({ resume, selfDescription, jobDescription });
 app.listen(3000, () => {
   console.log("Server is running on port 3000");
 });

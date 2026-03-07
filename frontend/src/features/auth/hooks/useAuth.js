@@ -49,6 +49,7 @@ export const useAuth = () => {
 
   useEffect(() => {
     const fetchUser = async () => {
+      setLoading(true);
       try {
         const data = await getMe();
 
