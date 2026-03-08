@@ -1,7 +1,10 @@
 import { createRequire } from "module";
 import { PDFParse } from "pdf-parse";
 
-import { generateInterviewReport } from "../services/ai.service.js";
+import {
+  generateInterviewReport,
+  generateResumePdf,
+} from "../services/ai.service.js";
 import interviewReportModel from "../models/interviewRepoert.model.js";
 
 /**
@@ -84,15 +87,35 @@ const getAllInterviewReportsController = async (req, res) => {
   }
 };
 
+/**
+ * @description Controller to generate resume PDF based on user self description, resume and job description.
+ */
 const generateResumePdfController = async (req, res) => {
-  const interviewReports = await interviewReportModel
-    .find({ user: req.user.id })
-    .sort({ createdAt: -1 })
-    .select(
-      "-resume -selfDescription -jobDescription -technicalQuestions -behavioralQuestions -skillGaps -preparationPlan",
-    );
+  const { interviewReportId } = req.params;
 
-  res.status(200).json({ interviewReports });
+  const interviewReport =
+    await interviewReportModel.findById(interviewReportId);
+
+  if (!interviewReport) {
+    return res.status(404).json({
+      message: "Interview report not found.",
+    });
+  }
+
+  const { resume, jobDescription, selfDescription } = interviewReport;
+
+  const pdfBuffer = await generateResumePdf({
+    resume,
+    jobDescription,
+    selfDescription,
+  });
+
+  res.set({
+    "Content-Type": "application/pdf",
+    "Content-Disposition": `attachment; filename=resume_${interviewReportId}.pdf`,
+  });
+
+  res.send(pdfBuffer);
 };
 
 export {
