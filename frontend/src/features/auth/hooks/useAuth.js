@@ -55,6 +55,7 @@ export const useAuth = () => {
 
         setUser(data.user);
       } catch (error) {
+        console.error("Error fetching user:", error);
         setUser(null);
       } finally {
         setLoading(false);
@@ -62,7 +63,7 @@ export const useAuth = () => {
     };
 
     fetchUser();
-  }, []);
+  }, [setLoading, setUser]);
 
   return {
     user,

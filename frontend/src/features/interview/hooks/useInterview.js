@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useCallback, useContext } from "react";
 import {
   generateInterviewReport,
   generateResumePdf,
@@ -40,21 +40,24 @@ export const useInterview = () => {
     }
   };
 
-  const getReportById = async (interviewId) => {
-    setLoading(true);
-    try {
-      const data = await getInterviewReportById(interviewId);
-      setReport(data);
-      return data;
-    } catch (error) {
-      console.error("Error fetching interview report:", error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
+  const getReportById = useCallback(
+    async (interviewId) => {
+      setLoading(true);
+      try {
+        const data = await getInterviewReportById(interviewId);
+        setReport(data);
+        return data;
+      } catch (error) {
+        console.error("Error fetching interview report:", error);
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [setLoading, setReport],
+  );
 
-  const getReports = async () => {
+  const getReports = useCallback(async () => {
     setLoading(true);
     try {
       const data = await getAllInterviewReports();
@@ -66,7 +69,7 @@ export const useInterview = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [setLoading, setReports]);
 
   const getResumePdf = async (interviewReportId) => {
     setLoading(true);
