@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router'
 import { useInterview } from '../hooks/useInterview.js'
 import '../style/interview.scss'
+import Loader from '../../../components/Loader'
 
 
 
@@ -65,16 +66,12 @@ const Interview = () => {
     useEffect(() => {
         if (!interviewId) return
         getReportById(interviewId)
-    }, [interviewId])
+    }, [interviewId, getReportById])
 
 
 
     if (loading || !report) {
-        return (
-            <main className='loading-screen'>
-                <h1>Loading your interview plan...</h1>
-            </main>
-        )
+        return <Loader message="Loading your interview plan..." />;
     }
 
     const scoreColor =

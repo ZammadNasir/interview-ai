@@ -2,34 +2,65 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useInterview } from '../hooks/useInterview.js'
 import "../style/home.scss"
+import Loader from '../../../components/Loader'
 
 const Home = () => {
 
     const { loading, generateReport,reports,getReports } = useInterview()
     const [ jobDescription, setJobDescription ] = useState("")
     const [ selfDescription, setSelfDescription ] = useState("")
+    const [ errors, setErrors ] = useState({})
     const resumeInputRef = useRef()
 
     const navigate = useNavigate()
 
     useEffect(() => {
     getReports()
-    }, [])
+    }, [getReports])
+
+    const handleFileChange = (e) => {
+        const file = e.target.files[0]
+        if (file) {
+            const allowedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+            if (!allowedTypes.includes(file.type)) {
+                setErrors(prev => ({ ...prev, resume: "Only PDF or DOCX files are allowed" }))
+                e.target.value = ''
+                return
+            }
+            if (file.size > 5 * 1024 * 1024) { // 5MB
+                setErrors(prev => ({ ...prev, resume: "File size must be less than 5MB" }))
+                e.target.value = ''
+                return
+            }
+            setErrors(prev => ({ ...prev, resume: undefined }))
+        }
+    }
+
+    const validateForm = () => {
+        const newErrors = {}
+        if (!jobDescription.trim()) newErrors.jobDescription = "Job description is required"
+        if (!selfDescription.trim() && !resumeInputRef.current?.files[0]) {
+            newErrors.selfDescription = "Either self-description or resume is required"
+        }
+        setErrors(newErrors)
+        return Object.keys(newErrors).length === 0
+    }
 
     const handleGenerateReport = async () => {
+        if (!validateForm()) return
         const resumeFile = resumeInputRef.current.files[ 0 ]
-        const data = await generateReport({ jobDescription, selfDescription, resumeFile })
-        if(data && data._id) {
-            navigate(`/interview/${data._id}`)
+        try {
+            const data = await generateReport({ jobDescription: jobDescription.trim(), selfDescription: selfDescription.trim(), resumeFile })
+            if(data && data._id) {
+                navigate(`/interview/${data._id}`)
+            }
+        } catch {
+            setErrors({ general: "Failed to generate report. Please try again." })
         }
     }
 
     if (loading) {
-        return (
-            <main className='loading-screen'>
-                <h1>Loading your interview plan...</h1>
-            </main>
-        )
+        return <Loader message="Loading your interview plan..." />;
     }
 
     return (
@@ -55,12 +86,14 @@ const Home = () => {
                             <span className='badge badge--required'>Required</span>
                         </div>
                         <textarea
+                            value={jobDescription}
                             onChange={(e) => { setJobDescription(e.target.value) }}
                             className='panel__textarea'
                             placeholder={`Paste the full job description here...\ne.g. 'Senior Frontend Engineer at Google requires proficiency in React, TypeScript, and large-scale system design...'`}
                             maxLength={5000}
                         />
-                        <div className='char-counter'>0 / 5000 chars</div>
+                        <div className='char-counter'>{jobDescription.length} / 5000 chars</div>
+                        {errors.jobDescription && <span className="error">{errors.jobDescription}</span>}
                     </div>
 
                     {/* Vertical Divider */}
@@ -87,8 +120,9 @@ const Home = () => {
                                 </span>
                                 <p className='dropzone__title'>Click to upload or drag &amp; drop</p>
                                 <p className='dropzone__subtitle'>PDF or DOCX (Max 5MB)</p>
-                                <input ref={resumeInputRef} hidden type='file' id='resume' name='resume' accept='.pdf,.docx' />
+                                <input ref={resumeInputRef} hidden type='file' id='resume' name='resume' accept='.pdf,.docx' onChange={handleFileChange} />
                             </label>
+                            {errors.resume && <span className="error">{errors.resume}</span>}
                         </div>
 
                         {/* OR Divider */}
@@ -98,6 +132,7 @@ const Home = () => {
                         <div className='self-description'>
                             <label className='section-label' htmlFor='selfDescription'>Quick Self-Description</label>
                             <textarea
+                                value={selfDescription}
                                 onChange={(e) => { setSelfDescription(e.target.value) }}
                                 id='selfDescription'
                                 name='selfDescription'
@@ -105,6 +140,7 @@ const Home = () => {
                                 placeholder="Briefly describe your experience, key skills, and years of experience if you don't have a resume handy..."
                             />
                         </div>
+                        {errors.selfDescription && <span className="error">{errors.selfDescription}</span>}
 
                         {/* Info Box */}
                         <div className='info-box'>
@@ -118,12 +154,14 @@ const Home = () => {
 
                 {/* Card Footer */}
                 <div className='interview-card__footer'>
+                    {errors.general && <p className="error">{errors.general}</p>}
                     <span className='footer-info'>AI-Powered Strategy Generation &bull; Approx 30s</span>
                     <button
                         onClick={handleGenerateReport}
+                        disabled={loading}
                         className='generate-btn'>
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" /></svg>
-                        Generate My Interview Strategy
+                        {loading ? 'Generating...' : 'Generate My Interview Strategy'}
                     </button>
                 </div>
             </div>

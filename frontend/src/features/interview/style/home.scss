@@ -355,6 +355,13 @@ $font-stack:     system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Robot
 }
 
 
+// ── Error Styles ──────────────────────────────────────────────────────────────
+.error {
+    color: #ff6b6b;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
 // ── Page Footer ───────────────────────────────────────────────────────────────
 .page-footer {
     display: flex;
